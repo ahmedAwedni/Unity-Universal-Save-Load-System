@@ -1,7 +1,7 @@
 // 3. PlayerSaveExample.cs
 using UnityEngine;
 
-// Example of how to implement ISaveable on an existing script
+// Example to show how to implement ISaveable on an existing script
 public class PlayerSaveExample : MonoBehaviour, ISaveable
 {
     [SerializeField] private string uniqueSaveID = "Player_Stats";
@@ -40,7 +40,7 @@ public class PlayerSaveExample : MonoBehaviour, ISaveable
         // Unpackage the JSON string back into our struct
         PlayerData data = JsonUtility.FromJson<PlayerData>(stateJson);
 
-        // Apply it back to our actual variables
+        // Apply it back to our actual variables (apply for all three, the level, the health and the position)
         this.level = data.level;
         this.health = data.health;
         transform.position = data.position;
