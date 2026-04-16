@@ -8,8 +8,6 @@ public class SaveManager : MonoBehaviour
 {
     public static SaveManager Instance { get; private set; }
 
-    private string saveFilePath;
-
     // A wrapper class to hold our dictionary data since JsonUtility doesn't support Dictionaries natively
     [System.Serializable]
     private class SaveDataWrapper
@@ -27,12 +25,23 @@ public class SaveManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
-        // Sets the save path to the OS's persistent data directory (works on PC, Mobile, Consoles)
-        saveFilePath = Path.Combine(Application.persistentDataPath, "gamesave.json");
     }
 
-    public void SaveGame()
+    // Helper method to dynamically generate the file path for a specific slot
+    private string GetSaveFilePath(int slot)
+    {
+        return Path.Combine(Application.persistentDataPath, $"gamesave_{slot}.json");
+    }
+
+
+    /// Checks if a save file exists in the specified slot. Useful for UI "Continue" buttons.
+
+    public bool DoesSaveExist(int slot = 1)
+    {
+        return File.Exists(GetSaveFilePath(slot));
+    }
+
+    public void SaveGame(int slot = 1)
     {
         // Find all objects in the active scene that implement ISaveable
         IEnumerable<ISaveable> saveables = FindObjectsOfType<MonoBehaviour>(true).OfType<ISaveable>();
@@ -46,20 +55,24 @@ public class SaveManager : MonoBehaviour
         }
 
         string finalJson = JsonUtility.ToJson(wrapper, true);
-        File.WriteAllText(saveFilePath, finalJson);
+        string currentSavePath = GetSaveFilePath(slot);
+        
+        File.WriteAllText(currentSavePath, finalJson);
 
-        Debug.Log($"Game Saved Successfully to: {saveFilePath}");
+        Debug.Log($"Game Saved Successfully to Slot {slot}: {currentSavePath}");
     }
 
-    public void LoadGame()
+    public void LoadGame(int slot = 1)
     {
-        if (!File.Exists(saveFilePath))
+        string currentSavePath = GetSaveFilePath(slot);
+
+        if (!File.Exists(currentSavePath))
         {
-            Debug.LogWarning("No save file found!");
+            Debug.LogWarning($"No save file found in Slot {slot}!");
             return;
         }
 
-        string json = File.ReadAllText(saveFilePath);
+        string json = File.ReadAllText(currentSavePath);
         SaveDataWrapper wrapper = JsonUtility.FromJson<SaveDataWrapper>(json);
 
         // Rebuild a dictionary for quick lookups
@@ -79,15 +92,17 @@ public class SaveManager : MonoBehaviour
             }
         }
 
-        Debug.Log("Game Loaded Successfully!");
+        Debug.Log($"Game Loaded Successfully from Slot {slot}!");
     }
 
-    public void DeleteSaveData()
+    public void DeleteSaveData(int slot = 1)
     {
-        if (File.Exists(saveFilePath))
+        string currentSavePath = GetSaveFilePath(slot);
+        
+        if (File.Exists(currentSavePath))
         {
-            File.Delete(saveFilePath);
-            Debug.Log("Save data deleted.");
+            File.Delete(currentSavePath);
+            Debug.Log($"Save data in Slot {slot} deleted.");
         }
     }
 }
